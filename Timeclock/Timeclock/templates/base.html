@@ -1,0 +1,85 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<html >
+<head >
+    <meta charset="utf-8">
+    <title>{% block title %}{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="Chris Q Overly" content="">
+    <link href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet">
+    <style class='text/css'>
+        /*Padding for navbar*/
+        body {padding-top: 60px;}
+    </style>
+    <link href="{% static 'css/bootstrap-responsive.min.css' %}" rel="stylesheet">
+</head>
+<body>
+<!-- Navbar Area -->
+<nav class = 'navbar navbar-inverse navbar-fixed-top' role = 'navigation'>
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse"
+        data-target=".navbar-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="#">
+            Timeclock
+        </a>
+    </div>
+    <div class="collapse navbar-collapse">
+        <ul class="nav navbar-nav navbar-right">
+            <li  class="active"><a href="{% url 'home' %}">Home</a></li>
+            {% if user.is_superuser or user.is_staff %}
+            <li><a href="{% url 'admin:index' %}">Admin</a></li>
+            {% endif %}
+            {% if user.is_authenticated %}
+            <li><a href="#url'emp_detail' user.username">
+            Logged in as:  {{ user.username }}</a></li>
+            <li><a href="url 'emp_detail' user.username">Profile</a></li>
+            <li><a href="{% url 'logout' %}">Logout</a></li>
+            {% endif %}
+        </ul>
+    </div>
+</nav>
+<!-- End Navbar Area -->
+<!-- Main display area -->
+<div class="container">
+    <div>
+        <div>
+            {% block content %}{% endblock %}
+        </div>
+        <div>
+            {% if user.is_superuser %}
+            <ul class="list-unstyled">
+                <li><a href="{% url 'home' %}">Home</a></li>
+                <li><a href="{% url 'login' %}">Login</a></li>
+
+                <li><a href="url 'view_emps'">View Employees</a></li>
+                <li><a href="{% url 'add_emp' %}">Add Employee</a></li>
+
+                <li><a href="{% url 'punch_clock' %}">Clock In/Out</a></li>
+                <li><a href="{% url 'view_card' %}">View Timecard</a></li>
+                <li><a href="{% url 'admin:index' %}">Admin</a></li>
+            </ul>
+            {% endif %}
+        </div>
+        <div>
+            {% if messages %}
+            <ul class="messages list-unstyled">
+                {% for message in messages %}
+                <li{% if message.tags %} class="text-{{ message.tags }}"{% endif %}>
+                    <h4>{{ message }}</h3>
+                </li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<!-- End main display area -->
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script src="{% static 'js/bootstrap.min.js' %}"></script>
+</body>
+</html>

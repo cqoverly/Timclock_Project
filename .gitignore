@@ -6,3 +6,5 @@ local_settings.py
 #For Mac
 .DS_Store
 .localized
+
+*.log

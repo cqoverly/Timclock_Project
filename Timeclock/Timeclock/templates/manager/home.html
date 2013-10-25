@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<h1>Timeclock</h1>
+<br><br>
+{% if not user.is_superuser %}
+<div class="jumbotron col-md-8">
+    <h3>Welcome to Timeclock</h3>
+    <ul class="list-unstyled">
+        <li>Please <a href="{% url 'login' %}">log in</a> to get started.</li>
+
+    </ul>
+</div>
+{% endif %}
+{% endblock %}

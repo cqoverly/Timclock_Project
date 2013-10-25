@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Timecard{% endblock %}
+{% block content %}
+<h1>Add Employee</h1>
+<br>
+<div class="row">
+  <form action="" method="POST" class="span9">{% csrf_token %}
+    <label>Employee Info:</label>
+      {{ form.as_p }}<br>
+      <input class="btn btn-primary active" type="submit"
+      name="add" value="Add">
+      <button class="btn" name="cancel">Cancel</button>
+    </form>
+</div>
+
+<div>
+</div>
+{% endblock %}
