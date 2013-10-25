@@ -13,4 +13,8 @@ urlpatterns = patterns('',
     #     name='emp_detail'),
     url(r'^add_employee$', views.vw_add_employee, name='add_emp'),
     url(r'^change_password$', views.vw_change_password, name='change_password'),
+    url(r'^view_employees$', views.vw_employees, name='view_emps'),
+    url(r'^view_employee/(?P<username>\w+)$',
+        views.vw_employee,
+        name='view_emp'),
     )

@@ -155,13 +155,21 @@ def vw_change_password(request):
             elif form.is_valid():
                 new_pw = form.cleaned_data['new_password']
                 employee.set_password(new_pw)
+                employee.save()
                 msg = "Password successfully changed."
                 messages.add_message(request, messages.SUCCESS, msg)
                 return redirect('home')
         except ValueError, e:
             print 'ValidationError: {}'.format(e)
             msg = e
-            messages.add_message(request, messages.ERROR, msg, extra_tags='danger')
+            messages.add_message(request,
+                messages.ERROR,
+                msg, extra_tags='danger')
+        except AttributeError, e:
+            msg = e
+            messages.add_message(request,
+                messages.ERROR,
+                msg, extra_tags='danger')
     form = ChangePasswordForm()
     return render(request, 'change_password.html', {'form': form})
 
@@ -200,15 +208,11 @@ def vw_home(request):
     mgr = Group.objects.get_or_create(name='Manager')[0]
     emp = Group.objects.get_or_create(name='Employee')[0]
 
-    m = Group.objects.get(name='Manager')
-    e = Group.objects.get(name='Employee')
     if request.user.is_authenticated():
         user = request.user
-        if m in user.groups.all():
-            print 'MANAGER'
+        if mgr in user.groups.all() or request.user.is_superuser:
             return render(request,'manager_home.html')
-        elif e in user.groups.all():
-            print 'Employee'
+        elif emp in user.groups.all():
             return render(request,'employee_home.html')
     return render(request, 'home.html')
 
@@ -217,5 +221,11 @@ def vw_manager_home(request):
 
 def vw_employee_home(request):
     return render(request, 'employee_home.html')
+
+def vw_employees(request):
+    return render(request, 'view_employees.html')
+
+def vw_employee(request):
+    return render(request, 'view_employee.html')
 
 

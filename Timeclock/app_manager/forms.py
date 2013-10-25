@@ -19,7 +19,6 @@ class ChangePasswordForm(forms.Form):
         reentered_pw = cleaned_data.get("reenter")
         # Find match for acceptable characters
         pw_check = pattern.match(new_pw)
-        print new_pw, reentered_pw, pw_check.group()
         if new_pw != reentered_pw:
             print 'NOT EQUAL'
             # Raise error if fields are not equal
@@ -27,12 +26,14 @@ class ChangePasswordForm(forms.Form):
             raise ValueError(msg)
             # raise ValidationError(msg)
             print "And shouldn't get here."
-        elif new_pw != pw_check.group():
-            print 'Unacceptable'
+        try:
+            match = pw_check.group()
+            if len(match) != len(new_pw):
+                raise AttributeError
+        except AttributeError:
             # Means there were unacceptable characters in the new password.
-            msg = "Only characters A-Za-z0-9_ are allowed in a password."
-            raise ValueError(msg)
-            # raise forms.ValidationError(msg)
+            char_msg = "Only characters A-Za-z0-9_ are allowed in a password."
+            raise AttributeError(char_msg)
         return cleaned_data
 
 

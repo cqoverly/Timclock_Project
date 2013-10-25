@@ -1,9 +1,36 @@
-<!DOCTYPE html>
-<html lang=en>
-<head>
-  <title></title>
-</head>
-<body>
-<h1>employee_home</h1>
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<div>
+    <h1>Employee Home</h1>
+</div>
+<br><br>
+<div>
+    <ul class="list-unstyled">
+        <li>
+            <h4>
+                <span class="glyphicon glyphicon-time"></span>
+                <a href="{% url 'punch_clock' %}">Clock In/Out</a></li>
+            </h4>
+        <li>
+            <h4>
+                <span class="glyphicon glyphicon-list"></span>
+                <a href="{% url 'view_card' %}">View Timecard</a>
+            </h4>
+        </li>
+        <li>
+            <h4>
+                <span class="glyphicon glyphicon-user"></span>
+                <a href="{% url 'view_emps' %}">View Employees</a>
+            </h4>
+        </li>
+        <li>
+            <h4>
+                <span class="glyphicon glyphicon-link"></span>
+                <a href="{% url 'change_password' %}">Change Password</a>
+            </h4>
+        </li>
+    </ul>
+    </ul>
+</div>
+{% endblock %}
