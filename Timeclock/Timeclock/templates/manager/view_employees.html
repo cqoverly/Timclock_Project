@@ -1,9 +1,11 @@
 {% extends "base.html" %}
-{% block title %}Home{% endblock %}
+{% block title %}Employee List{% endblock %}
 {% block content %}
-<h1>view_employees</h1>
-<br><br>
-<div>
-  <p>Employee list</p>
-</div>
+<h1>employee_detail.html</h1>
+    <ul>
+        {% for employee in object_list %}
+            <li><a href={% url 'view_emp' employee.pk %}>
+              {{ employee.first_name }} {{ employee.last_name }}</a></li>
+        {% endfor %}
+    </ul>
 {% endblock %}

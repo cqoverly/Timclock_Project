@@ -1,9 +1,64 @@
-<!DOCTYPE html>
-<html lang=en>
-<head>
-  <title></title>
-</head>
-<body>
-<h1>view_timecard</h1>
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}Timecard{% endblock %}
+{% block content %}
+<h1>View Timecard for {{ user.first_name }} {{ user.last_name }}</h1>
+<br><br>
+<div class="row">
+    <form action="" method="POST" class="col-md-3">{% csrf_token %}
+        <p>{{ form.name }}</p>
+        <p>
+            <label>Enter a date within the time period:</label>
+            {{ form.date }}
+        </p>
+        <input type="submit" class="btn btn-primary" value="Submit" name="view">
+        <button class="btn" name="cancel">Cancel</button>
+    </form>
+</div>
+<br><br>
+</div>
+<div>
+    {% for w, witems in card %}
+        <h2 class="text-primary">{{ w }}</h2>
+
+        {% for in, out, hrs in witems.stamps %}
+        <ul>
+            <li>{{ in.stamp|date:'D m/d/Y' }} ({{ in.in_out}}) -
+                {{ out.stamp|date:'D m/d/Y' }}  ({{ out.in_out}} ): {{ hrs }}</li>
+        </ul>
+        {% endfor %}
+        <br>
+    {% endfor %}
+    <p>
+        <strong>Regular Hours: {{ regular_hrs }}</strong>
+    </p>
+    <p>
+        <strong>Overtime Hours: {{ OT_hrs }}</strong>
+    </p>
+    <p>
+        <strong>Total Hours: {{ total_hrs }}</strong>
+    </p>
+</div>
+<div>
+  {% for w, witems in card %}
+  <div class="row">
+  <h3 class="text-primary">{{ w }}</h3>
+  <table class="col-md-6 row">
+    <thead>
+      <tr>
+        <th>Date In</th>
+        <th>Date Out</th>
+        <th>Hours</th>
+     </tr>
+    </thead>
+    {% for in, out, hrs in witems.stamps %}
+    <tr>
+      <td>{{ in.stamp|date:'D m/d/Y' }}</td>
+      <td>{{ out.stamp|date:'D m/d/Y' }}</td>
+      <td>{{ hrs }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
