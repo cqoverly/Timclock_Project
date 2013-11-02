@@ -20,18 +20,17 @@ from .models import Employee
 
 class EmployeeList(ListView):
     model = User
-    template_name = 'employee_list.html'
+    template_name = 'view_employees.html'
     employees = User.objects.filter(groups__name='Employee')
     queryset = employees.order_by('last_name', 'first_name')
 
-class EmployeeDetail(DetailView):
-    model = User
-    context_object_name = 'employee'
-    template_name = 'employee_detail.html'
 
-def vw_employee_detail(request, username):
-    employee = User.objects.get(username=username)
-    return render(request, 'employee_detail.html', {'employee': employee})
+def vw_employee_detail(request, pk):
+    employee = User.objects.get(pk=pk)
+    info = Employee.objects.get(user=employee)
+    return render(request,
+        'employee_detail.html',
+        {'employee': employee, 'info': info})
 
 
 # def vw_edit_employee(request, pk):
@@ -214,7 +213,7 @@ def vw_home(request):
             return render(request,'manager_home.html')
         elif emp in user.groups.all():
             return render(request,'employee_home.html')
-    return render(request, 'home.html')
+    return render(request, 'home.html', {'home': True})
 
 def vw_manager_home(request):
     return render(request, 'manager_home.html')
