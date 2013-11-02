@@ -1,7 +1,7 @@
 *.log
 *.pot
 *.pyc
-local_settings.py
+personal_settings.py
 
 #For Mac
 .DS_Store
