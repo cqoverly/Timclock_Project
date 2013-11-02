@@ -63,6 +63,14 @@ def get_payperiod(date):
         period_end = datetime.datetime(end_year, month_plusone, 1, tzinfo=TZ)
     return period_start, period_end
 
+def get_range(employee, date_start, date_end):
+    stamps = Timestamp.objects.filter(
+        user=employee,
+        stamp__range=(date_start, date_end)
+    )
+    stamps = stamps.order_by('stamp')
+    return stamps
+
 
 class Timecard():
     """
@@ -77,7 +85,7 @@ class Timecard():
     hours worked.
 
     """
-    def __init__(self, employee, date):
+    def __init__(self, user, date):
         """
         - employee is any instance of employee_manager.models.Employee
         - date is any date within the pay period being calculated.
@@ -85,7 +93,7 @@ class Timecard():
           and start_weekday.
         """
         req_date = convert_date(date)
-        self.emp = employee
+        self.emp = user
         self.start_date, self.end_date = get_payperiod(req_date)
         self.start_weekday = self.start_date.weekday()
         print "About to get card."
@@ -111,7 +119,7 @@ class Timecard():
         instance's time period.
         """
         all_stamps = Timestamp.objects.all().filter(
-            employee=self.emp,
+            user=self.emp,
             stamp__range=(self.start_date, self.end_date)
             ).order_by('stamp')
         # local_stamp = lambda d: d.astimezone(TZ)
@@ -235,7 +243,7 @@ class Timecard():
         """
         # Range of the workweek for OT purposes.
         r = (self._OTweek_start, self._OTweek_start+timedelta(7))
-        full_week1 = Timestamp.objects.all().filter(employee=self.emp,
+        full_week1 = Timestamp.objects.all().filter(user=self.emp,
             stamp__range=(r)).order_by('stamp')
         self._verify_pairs(full_week1)
         inout_pairs = self._generate_pairs(full_week1)
