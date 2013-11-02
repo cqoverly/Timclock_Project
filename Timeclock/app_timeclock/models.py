@@ -75,3 +75,25 @@ class Timestamp(models.Model):
         """
         pass
 
+
+class TimestampEdits(models.Model):
+    timestamp = models.ForeignKey(Timestamp, verbose_name="Changed StampID")
+    changed_by = models.ForeignKey(
+        User,
+        verbose_name="Changed By",
+        related_name="user_changed_by"
+    )
+    for_employee = models.ForeignKey(
+        User,
+        verbose_name="Original Employee",
+        related_name="user_for_employee"
+    )
+    original_datetime = models.DateTimeField("Original Datetime")
+    original_inout = models.CharField("In_Out", max_length=3)
+    new_datetime = models.DateTimeField("New Datetime")
+    new_inout = models.CharField("New In_Out", max_length=3)
+    change_reason = models.CharField("Reason", max_length=255)
+    date_changed = models.DateTimeField("Date Changed")
+
+
+
