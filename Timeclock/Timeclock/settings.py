@@ -1,11 +1,12 @@
 # Django settings for Timeclock project.
 import os
+import personal_settings
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
-DIR = os.path.abspath(os.path.dirname(__file__))
-print DIR
+PROJECT_DIR = os.path.dirname(os.path.dirname(__file__))
+ROOT_DIR = os.path.dirname(__file__)
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
 )
@@ -18,7 +19,7 @@ DATABASES = {
         'NAME': 'timeclockdb',                      # Or path to database file if using sqlite3.
         # The following settings are not used with sqlite3:
         'USER': 'django',
-        'PASSWORD': 'aloha093212rover12',
+        'PASSWORD': personal_settings.DB_PASSWORD,
         'HOST': '',                      # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
         'PORT': '',                      # Set to empty string for default.
     }
@@ -72,7 +73,7 @@ STATIC_URL = '/static/'
 
 # Additional locations of static files
 STATICFILES_DIRS = (
-    os.path.join(DIR, 'static'),
+    os.path.join(PROJECT_DIR, 'static'),
 )
 
 # List of finder classes that know how to find static files in
@@ -84,7 +85,7 @@ STATICFILES_FINDERS = (
 )
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = '@vha$7!2$pp+qj&b9hobgz+)o10_2d9@07ffwtybq*@8nm+j8b'
+SECRET_KEY = personal_settings.SECRET_KEY
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
@@ -99,6 +100,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     # Uncomment the next line for simple clickjacking protection:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
@@ -109,9 +111,9 @@ ROOT_URLCONF = 'Timeclock.urls'
 WSGI_APPLICATION = 'Timeclock.wsgi.application'
 
 TEMPLATE_DIRS = (
-    os.path.join(DIR, "templates"),
-    os.path.join(DIR, "templates/manager"),
-    os.path.join(DIR, "templates/timeclock"),
+    os.path.join(ROOT_DIR, "templates"),
+    os.path.join(ROOT_DIR, "templates/manager"),
+    os.path.join(ROOT_DIR, "templates/timeclock"),
 )
 print 'Templates: {}'.format(TEMPLATE_DIRS[0])
 
@@ -129,11 +131,14 @@ INSTALLED_APPS = (
     'debug_toolbar',
     'django_extensions',
     'south',
-    'hello',
     'app_timeclock',
     'app_manager',
     'localflavor',
+    'debug_toolbar',
+    'django_extensions',
 )
+
+INTERNAL_IPS = ('127.0.0.1',)
 
 AUTHENTICATION_BACKENDS = ('django.contrib.auth.backends.ModelBackend',)
 
