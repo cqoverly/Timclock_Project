@@ -13,7 +13,7 @@ class ChangePasswordForm(forms.Form):
 
     def clean(self):
         print 'ENTERING CLEAN'
-        pattern = re.compile(r'\w+')
+        pattern = re.compile(r'\w+')\
         cleaned_data = super(ChangePasswordForm, self).clean()
         new_pw = cleaned_data.get("new_password")
         reentered_pw = cleaned_data.get("reenter")
