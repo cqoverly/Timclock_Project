@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<h1>view_employee</h1>
+<br><br>
+<div>
+  <h3>{{ employee.first_name }} {{ employee.last_name }}</h3>
+  <ul class="unstyled">
+    <li>Username: {{ employee.username }}</li>
+    <li>Street 1: {{ info.street1 }}</li>
+    <li>Street 2: {{ info.street2 }}</li>
+    <li>City: {{ info.city }}</li>
+    <li>State: {{ info.state }}</li>
+    <li>Zip Code: {{ info.zip_code }}</li>
+    <li>Date Started: {{ info.date_started }}</li>
+    {% if info.date_ended %}
+    <li>Date Ended: {{ info.date_ended }}</li>
+    {% endif %}
+    <li>Starting Wage: {{ info.starting_wage }}</li>
+    <li>Current Wage: {{ info.current_wage }}</li>
+  </ul>
+</div>
+{% endblock %}
