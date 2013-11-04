@@ -7,13 +7,31 @@ from django.utils import timezone
 
 
 class ChangePasswordForm(forms.Form):
+    """
+    Standard style enter and re-enter password form.
+    """
     class_textwidget = forms.TextInput(attrs={'class': 'form-control'})
-    new_password = forms.CharField(widget=class_textwidget, max_length=80, label="New Password")
-    reenter = forms.CharField(widget=class_textwidget, max_length=80, label="Re-enter")
+    new_password = forms.CharField(
+        widget=class_textwidget,
+        max_length=80,
+        label="New Password"
+    )
+    reenter = forms.CharField(
+        widget=class_textwidget,
+        max_length=80,
+        label="Re-enter"
+    )
 
     def clean(self):
+        """
+        Checks for allowable characters and field matches for entry and
+        re-entry.
+
+        Raises custom exception as AttributeError with message which can be
+        used in receiving function.
+        """
         print 'ENTERING CLEAN'
-        pattern = re.compile(r'\w+')\
+        pattern = re.compile(r'\w+')
         cleaned_data = super(ChangePasswordForm, self).clean()
         new_pw = cleaned_data.get("new_password")
         reentered_pw = cleaned_data.get("reenter")
@@ -24,8 +42,6 @@ class ChangePasswordForm(forms.Form):
             # Raise error if fields are not equal
             msg = "Password values did not match."
             raise ValueError(msg)
-            # raise ValidationError(msg)
-            print "And shouldn't get here."
         try:
             match = pw_check.group()
             if len(match) != len(new_pw):
@@ -38,6 +54,9 @@ class ChangePasswordForm(forms.Form):
 
 
 class AddEmployeeForm(forms.Form):
+    """
+    Used to generate both a new django User, as well as an an Employee instance
+    """
     last_name = forms.CharField(max_length=50)
     first_name = forms.CharField(max_length=30)
     username = forms.CharField(max_length=20)
