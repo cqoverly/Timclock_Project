@@ -150,19 +150,18 @@ def vw_edit_timestamp(request, pk):
         if request.POST.get('cancel') == '':
             return redirect('home')
         elif form.is_valid():
-            form = request
-            new_datetime = form.cleaned_data('new_datetime')
-            new_inout = form.cleaned_data('new_inout')
-            edittable_params = {
+            new_datetime = form.cleaned_data['new_datetime']
+            new_inout = form.cleaned_data['new_inout']
+            editable_params = {
                 'timestamp': orig_stamp,
                 'changed_by': user,
-                'for_employee': orig_stamp.employee,
+                'for_employee': orig_stamp.user,
                 'original_datetime': orig_stamp.stamp,
                 'original_inout': orig_stamp.in_out,
                 'new_datetime': new_datetime,
                 'new_inout': new_inout,
-                'change_reason': form.cleaned_data('change_reason'),
-                'date_changed': datetime.now(),
+                'change_reason': form.cleaned_data['change_reason'],
+                'date_changed': datetime.datetime.now(),
             }
             #### Is this necessary?
             update_params = {
@@ -173,14 +172,14 @@ def vw_edit_timestamp(request, pk):
             # Update stamp fields
             orig_stamp.stamp = new_datetime
             orig_stamp.in_out = new_inout
-            edit_entry = TimestampEdits(*edittable_params)
+            edit_entry = TimestampEdits(**editable_params)
 
             # Update stamp
             orig_stamp.save()
             # create new record in EditStamp table
             edit_entry.save()
             msg = "Your timestamp has been changed."
-            messages.add_message(request, messages.Success, msg)
+            messages.add_message(request, messages.SUCCESS, msg)
             return redirect('home')
     # generate initial form with date from stamp to be changed for convenience.
     initial_params = {
