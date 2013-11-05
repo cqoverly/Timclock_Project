@@ -8,13 +8,13 @@ import pytz
 
 # django modules
 import django.utils
-from Timeclock.settings import TIME_ZONE
+from django.conf import settings
 
 # project modules
 from .models import Timestamp
 
 
-TZ = pytz.timezone(TIME_ZONE)
+TZ = pytz.timezone(settings.TIME_ZONE)
 UTC = pytz.timezone('utc')
 WEEKDAYS = ['Sun', 'Mon', 'Tues', 'Wed', 'Thur', 'Fri', 'Sat']
 WEEKDAY_NUMBERS = [6, 0, 1, 2, 3, 4, 5, 6]
@@ -22,13 +22,50 @@ WEEKDAY_DICT = dict(zip(WEEKDAYS, WEEKDAY_NUMBERS))
 
 
 def convert_timedelta(duration):
+    """
+    Converts a timedelta object into hours
+
+    >>> duration = timedelta(0, 45644)
+    >>> hours = convert_timedelta(duration)
+    >>> print hours
+    12.67
+
+    """
     days, seconds = duration.days, duration.seconds
-    hours = seconds / 3600
+    hours = (seconds / 3600) + (days * 24)
     minutes = (seconds % 3600) / 60
     return round((hours + minutes/60.0), 2)
 
 
 def convert_date(str_date):
+    """
+    Converts a string representation of a date from 5 different formats into
+    datetime objects.
+
+    Formats allowed:
+        '%m/%d/%Y'
+        '%m/%d/%y'
+        '%Y-%m-%d'
+        '%m-%d-%Y'
+        '%m-%d-%y'
+
+    >>> str_1 = '9/9/2013'
+    >>> convert_date(str_1)
+    datetime.datetime(2013, 9, 9, 0, 0, tzinfo=<DstTzInfo 'America/Los_Angeles' PDT-1 day, 17:00:00 DST>)
+    >>> str_2 = '2/2/13'
+    >>> convert_date(str_2)
+    datetime.datetime(2013, 2, 2, 0, 0, tzinfo=<DstTzInfo 'America/Los_Angeles' PST-1 day, 16:00:00 STD>)
+    >>> str_3 = '2013-4-5'
+    >>> convert_date(str_3)
+    datetime.datetime(2013, 4, 5, 0, 0, tzinfo=<DstTzInfo 'America/Los_Angeles' PDT-1 day, 17:00:00 DST>)
+    >>> str_4 = '7-12-2012'
+    >>> convert_date(str_4)
+    datetime.datetime(2012, 7, 12, 0, 0, tzinfo=<DstTzInfo 'America/Los_Angeles' PDT-1 day, 17:00:00 DST>)
+    >>> str_5 = '6-12-2012'
+    >>> convert_date(str_5)
+    datetime.datetime(2012, 6, 12, 0, 0, tzinfo=<DstTzInfo 'America/Los_Angeles' PDT-1 day, 17:00:00 DST>)
+
+    """
     dtz = django.utils.timezone
     formats = ['%m/%d/%Y', '%m/%d/%y', '%Y-%m-%d', '%m-%d-%Y', '%m-%d-%y']
     d = None
@@ -44,6 +81,21 @@ def convert_date(str_date):
 def get_payperiod(date):
     """
     Find the working pay period from the argument date.
+
+    For 12th Avenue Iron, there are 2 pay periods per month:
+        First through 15th
+        16th through last day of month.
+
+    >>> date = datetime.datetime(2013, 9, 9, 0, 0, tzinfo=<DstTzInfo 'America/Los_Angeles' PDT-1 day, 17:00:00 DST>)
+    >>> start, end = get_payperiod(date)
+    >>> print start
+    datetime.datetime(2013, 9, 1, 0, 0, tzinfo=<DstTzInfo 'America/Los_Angeles' PDT-1 day, 17:00:00 DST>)
+    >>> print end
+    datetime.datetime(2013, 9, 16, 0, 0, tzinfo=<DstTzInfo 'America/Los_Angeles' PDT-1 day, 17:00:00 DST>)
+
+    The returned end time will actually be the very beginning of the day
+    following the last day of the period so as to encompass the full day
+    of the last day of the period when querying the date range.
     """
     d = date
     period_start = None
@@ -76,14 +128,34 @@ class Timecard():
     """
     Timecard(employee, date)
 
+    ============ ARGS =============
     employee and date are required.
 
+    employee:   User instance belonging to the custom User group "Employee"
+
+    date:       A string representation of a date which must use one of the
+                following formats:
+                    '%m/%d/%Y'
+                    '%m/%d/%y'
+                    '%Y-%m-%d'
+                    '%m-%d-%Y'
+                    '%m-%d-%y'
+
+
+    ============= DESCRIPTION ===========
     A Timecard instance is created based on an Employee instance and a
     string formatted date. Calculations determine what hours from the
     previous pay period are applicable for overtime, total regular hours,
     total overtime (OT) hours. A csv file is produced representing all
     hours worked.
 
+    The primary attribute in a Timecard instance is the ._card attribute. The
+    ._card attribute is  dict of containing:
+            -   Pairs of in and out Timestamp instances for each week in the
+                pay period.
+            -   Regular_Hours
+            -   OT_Hours
+            -   Total_Hours
     """
     def __init__(self, user, date):
         """
@@ -92,12 +164,10 @@ class Timecard():
         - date is used to determine the period start_date, end_date
           and start_weekday.
         """
-        req_date = convert_date(date)
+        self.req_date = convert_date(date)
         self.emp = user
-        self.start_date, self.end_date = get_payperiod(req_date)
+        self.start_date, self.end_date = get_payperiod(self.req_date)
         self.start_weekday = self.start_date.weekday()
-        print "About to get card."
-        print self.emp
         self._card = self._get_card()
         self.total_hrs, self.regular_hrs, self.OT_hrs = self._add_hours()
 
@@ -107,10 +177,16 @@ class Timecard():
         calculates the beginning of the workweek used for calculating
         overtime, which is based on a Sunday to Saturday system.
         """
-        if self.start_weekday == 6:
+        if self.start_weekday == 6: 
+        # Period start day is a Sunday
             return self.start_date
-        diff = timedelta(-1*(self.start_weekday+1))
-        return self.start_date + diff
+        else:
+        # Period start_date is not a Sunday
+            # Get how many days back is a Sunday which is the start day
+            # for OT calculations
+            diff = timedelta(self.start_weekday+1)
+            # subtract days back to get date of OT start and return
+            return self.start_date - diff
 
     @property
     def _stamps(self):
@@ -122,12 +198,11 @@ class Timecard():
             user=self.emp,
             stamp__range=(self.start_date, self.end_date)
             ).order_by('stamp')
-        # local_stamp = lambda d: d.astimezone(TZ)
-        # local_stamps = [local_stamp(s) for s in all_stamps]
-        # return local_stamps
         if all_stamps:
+            # Timestamps exist matching query
             return all_stamps
         else:
+            # No Timestamps matched query.
             raise ValueError('No stamps for requested time period.')
 
     def __str__(self):
@@ -153,17 +228,11 @@ class Timecard():
     def _get_card(self):
         """
         Creates a timecard for the instance's date range.
-        Makes a call too validate_card to check for errors.
+        Makes a call to validate_card to check for errors.
         Sends notification on failure, calls calculate_hours if
         successful.
         """
-        print 'Starting _card'
-        # prev_OTHours = 0
         try:
-        #     first_weekHRS = 0
-        #     OT_hours = 0
-        #     regular_hours = 0
-
         # Generate list of IN/OUT two-tuples
             inout_pairs = self._generate_pairs(self._stamps)
             #check to make sure pairings are valid.
@@ -189,6 +258,7 @@ class Timecard():
                     weeks_dict[week]['Total_Hours'] = week_total
             return weeks_dict
         except ValueError, e:
+            # Catches exception thrown in _verify_pairs, and passes it through.
             raise ValueError(e)
 
     def _generate_pairs(self, timestamps):
@@ -227,11 +297,11 @@ class Timecard():
             error_msg = template.format(start, end)
             raise IndexError(error_msg)
         elif stamps[0].in_out != 'IN':
-            raise ValueError("First stamp is 'Out', should be 'IN'")
+            raise TimecardError("First stamp is 'Out', should be 'IN'")
         for i in range(0, len(stamps), 2):
             s1, s2 = stamps[i], stamps[i+1]
             if s1.in_out != 'IN' or s2.in_out != 'OUT' or s1.stamp >= s2.stamp:
-                raise ValueError('Stamps out of order')
+                raise TimecardError('Stamps out of order')
         return True
 
     def _previousOT(self):
@@ -277,8 +347,8 @@ class Timecard():
         property to provide the total hours worked in the pay period
         range.
 
-        The values are then added as dict keys in the self_card property,
-        which are then passed to the following Timecard attribute:
+        The values are then added as dict keys in the self._card attribute,
+        which are then passed to the following Timecard attributes:
                 self.total_hrs
                 self.regular_hrs
                 self.OT_hrs
@@ -295,3 +365,16 @@ class Timecard():
             round(regular_hours, 2),
             round(OT_hours, 2)
             )
+
+
+class TimecardError(Exception):
+    """
+    Custom exception for errors generating a Timecard instance.
+    """
+    def __init__(self, msg):
+        self.msg = msg
+
+    def __str__(self):
+        base_str = "There was an error generating you timecard:"
+        full_str = "{0}\n{1}".format(base_str, msg)
+
