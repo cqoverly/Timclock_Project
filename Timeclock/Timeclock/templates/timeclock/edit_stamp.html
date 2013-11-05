@@ -4,13 +4,25 @@
 <h1>Edit Timestamp</h1>
 <br>
 <div class="row">
-  <form action="" method="POST" class="span9">{% csrf_token %}
-    <label></label>
-      {{ form.as_p }}<br>
-      <input class="btn btn-primary active" type="submit"
-      name="add" value="Add">
-      <button class="btn" name="cancel">Cancel</button>
-    </form>
+  <form action="" method="POST" class="row">{% csrf_token %}
+    <div class="row">
+      <div class="col-md-2">
+        <label>Date and Time</label>
+        <p>{{ form.new_datetime }}</p>
+        <label>In/Out</label>
+        <p>{{ form.new_inout }}</p><br>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-4">
+        <label>Reason for Change</label>
+        <p>{{ form.change_reason }}</p><br>
+        <input class="btn btn-primary active" type="submit"
+        name="add" value="Submit">
+        <button class="btn" name="cancel">Cancel</button>
+      </div>
+    </div>
+  </form>
 </div>
 
 <div>
