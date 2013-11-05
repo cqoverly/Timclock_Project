@@ -1,6 +1,7 @@
 # Django settings for Timeclock project.
 import os
 import personal_settings
+from personal_settings import DEBUG_TOOLBAR_CONFIG
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
