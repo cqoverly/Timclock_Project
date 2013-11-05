@@ -23,11 +23,12 @@ class TimestampForm(forms.Form):
 
 class EditStampForm(forms.Form):
     class_selectwidget = forms.Select(attrs={'class': 'form-control'})
+    class_textareawidget = forms.Textarea(attrs={'class': 'form-control'})
     sel_widget = class_selectwidget
-    new_datetime = forms.DateTimeField()
+    new_datetime = forms.DateTimeField(widget=class_textwidget)
     CHOICES = (('IN', 'IN'), ('OUT', 'OUT'))
     new_inout = forms.ChoiceField(choices=CHOICES, widget=sel_widget)
-    change_reason = forms.CharField(max_length=255, widget=class_textwidget)
+    change_reason = forms.CharField(max_length=255, widget=class_textareawidget)
 
     # def clean(self):
     #     cleaned_data = super(EditStampForm, self).clean()
