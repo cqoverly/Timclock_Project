@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Timecard{% endblock %}
 {% block content %}
-<h1>View Timecard for {{ user.first_name }} {{ user.last_name }}</h1>
-<br><br>
+<h2 class="text-primary">View Timecard for {{ user.first_name }} {{ user.last_name }}</h2>
+  <!-- DISPLAY EDIT TIMESTAMPS FORM -->
 <div class="row">
-    <form action="" method="POST" class="col-md-3">{% csrf_token %}
+    <form action="" method="POST" class="col-md-3 well">{% csrf_token %}
         <p>{{ form.name }}</p>
         <p>
             <label>Enter a date within the time period:</label>
@@ -14,30 +14,7 @@
         <button class="btn" name="cancel">Cancel</button>
     </form>
 </div>
-<br><br>
-</div>
-<div>
-    {% for w, witems in card %}
-        <h2 class="text-primary">{{ w }}</h2>
-
-        {% for in, out, hrs in witems.stamps %}
-        <ul>
-            <li>{{ in.stamp|date:'D m/d/Y' }} ({{ in.in_out}}) -
-                {{ out.stamp|date:'D m/d/Y' }}  ({{ out.in_out}} ): {{ hrs }}</li>
-        </ul>
-        {% endfor %}
-        <br>
-    {% endfor %}
-    <p>
-        <strong>Regular Hours: {{ regular_hrs }}</strong>
-    </p>
-    <p>
-        <strong>Overtime Hours: {{ OT_hrs }}</strong>
-    </p>
-    <p>
-        <strong>Total Hours: {{ total_hrs }}</strong>
-    </p>
-</div>
+  <!-- DISPLAY TIMESTAMPS TABLE -->
 <div>
   {% for w, witems in card %}
   <div class="row">
@@ -52,12 +29,13 @@
     </thead>
     {% for s_in, s_out, hrs in witems.stamps %}
     <tr>
-      <td><a href="{% url 'edit_stamp' s_in.pk %}">{{ s_in.stamp|date:'D m/d/Y  H:i' }}</a></td>
-      <td><a href="{%  url 'edit_stamp' s_out.pk %}">{{ s_out.stamp|date:'D m/d/Y  H:i' }}</a></td>
+      <td><a href="{% url 'edit_stamp' s_in.pk %}">{{ s_in.stamp|date:'D - m/d/Y  H:i' }}</a></td>
+      <td><a href="{%  url 'edit_stamp' s_out.pk %}">{{ s_out.stamp|date:'D - m/d/Y  H:i' }}</a></td>
       <td>{{ hrs }}</td>
     </tr>
     {% endfor %}
   </table>
+  <br><br>
   </div>
   {% endfor %}
 </div>
