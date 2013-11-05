@@ -50,10 +50,10 @@
         <th>Hours</th>
      </tr>
     </thead>
-    {% for in, out, hrs in witems.stamps %}
+    {% for s_in, s_out, hrs in witems.stamps %}
     <tr>
-      <td>{{ in.stamp|date:'D m/d/Y' }}</td>
-      <td>{{ out.stamp|date:'D m/d/Y' }}</td>
+      <td><a href="{% url 'edit_stamp' s_in.pk %}">{{ s_in.stamp|date:'D m/d/Y  H:i' }}</a></td>
+      <td><a href="{%  url 'edit_stamp' s_out.pk %}">{{ s_out.stamp|date:'D m/d/Y  H:i' }}</a></td>
       <td>{{ hrs }}</td>
     </tr>
     {% endfor %}
