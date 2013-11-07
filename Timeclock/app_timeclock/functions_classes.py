@@ -6,9 +6,11 @@ import calendar
 # 3rd Party Impots
 import pytz
 
+
 # django modules
 import django.utils
 from django.conf import settings
+from django.contrib.auth.models import User
 
 # project modules
 from .models import Timestamp
@@ -125,16 +127,18 @@ def get_payperiod(date):
 #     stamps = stamps.order_by('stamp')
 #     return stamps
 
-def get_stamplist(employee, range):
+def get_stamplist(employee, date_range):
     if employee not in User.objects.filter(groups__name='Employee'):
         msg = "An User instance belonging to Group 'Employee' is required."
         raise TimecardError(msg)
-    if type(range) != 'tuple' and len(range) != 2:
+    if type(date_range) != 'tuple' and len(date_range) != 2:
         raise TimecardError('Incorrect range input.')
     # generate list within the provided range.
-    start, end = range[0], range[1] + timedelta(1)
+    start, end = date_range[0], date_range[1] + timedelta(1)
     stamp_list = Timestamp.objects.filter(user=employee,
                                           stamp__range=(start, end))
+
+    # TODO: code to verify in_out correctness and msg if edits needed.
     return stamp_list
 
 
