@@ -1,5 +1,6 @@
 # Python Std Lib modules
 import datetime
+from datetime import timedelta
 
 # 3rd Party modules
 import pytz
@@ -8,16 +9,20 @@ import pytz
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.models import User, Group
+from django.contrib.auth.decorators import login_required
 
 
 # project modules
-from Timeclock import settings
+from django.conf import settings
+from .functions_classes import TimecardError, get_stamplist
 
 from .forms import (
     TimestampForm,
     EmpViewTimecardForm,
     ManagerViewTimecardForm,
     EditStampForm,
+    MgrViewTimestampListForm,
+    EmpViewTimestampListForm
 )
 from .models import Timestamp, TimestampEdits
 from .functions_classes import Timecard
@@ -25,6 +30,7 @@ from .functions_classes import Timecard
 
 TZ = pytz.timezone(settings.TIME_ZONE)
 
+@login_required
 def vw_punch_clock(request):
     employee = request.user
     if request.method == 'POST':
@@ -55,9 +61,8 @@ def vw_punch_clock(request):
     form = TimestampForm(initial=params)
     return render(request, 'punch_clock.html', {'form':form})
 
-
+@login_required
 def vw_view_timecard(request):
-    print 'In vw_view_timecard'
     # Assumed user is an Employee
     TimecardForm = EmpViewTimecardForm
     user_isemployee = True
@@ -66,8 +71,6 @@ def vw_view_timecard(request):
     if user not in User.objects.filter(groups__name='Employee'):
         TimecardForm = ManagerViewTimecardForm
         user_isemployee = False
-
-
     try:
         if request.method == 'POST':
             form = TimecardForm(request.POST)
@@ -118,7 +121,7 @@ def vw_view_timecard(request):
     except IndexError, e:
         msg = '{}: {}'.format('IndexError', e)
         messages.add_message(request, messages.ERROR, msg)
-    except ValueError, e:
+    except TimecardError, e:
         msg = '{}: {}'.format('ValueError', e)
         messages.add_message(request, messages.ERROR, msg)
 
@@ -126,6 +129,7 @@ def vw_view_timecard(request):
     form = TimecardForm()
     return render(request, 'view_timecard.html', {'form': form})
 
+@login_required
 def vw_edit_timestamp(request, pk):
     """
     View processes a request to change an existing Timestamp instance.
@@ -140,13 +144,14 @@ def vw_edit_timestamp(request, pk):
             changes, as the employees themselves are allowed to make the
             updates. This is neccessary to keep managers from constantly having
             to fix the stamps on their own. Clock punching is rife with missed
-            stamps or delayed stamps as workers do not always have access to the
-            timeclock, or just forget.
+            stamps or delayed stamps as workers do not always have access to
+            the timeclock or forget to punch the clock.
     """
     user = request.user
     orig_stamp = Timestamp.objects.get(pk=pk)
     if request.method == 'POST':
         form = EditStampForm(request.POST)
+        print request.POST
         if request.POST.get('cancel') == '':
             return redirect('home')
         elif form.is_valid():
@@ -164,10 +169,10 @@ def vw_edit_timestamp(request, pk):
                 'date_changed': datetime.datetime.now(),
             }
             #### Is this necessary?
-            update_params = {
-                'stamp': new_datetime,
-                'in_out': new_inout,
-            }
+            # update_params = {
+            #     'stamp': new_datetime,
+            #     'in_out': new_inout,
+            # }
             ####
             # Update stamp fields
             orig_stamp.stamp = new_datetime
@@ -195,8 +200,51 @@ def vw_edit_timestamp(request, pk):
         }
     )
 
+# TODO: Test for error handling.
+# TODO: Add docstring and line commnets
+@login_required
+def vw_list_timestamps(request):
+    is_manager = False
+    page_form = None
+    # Determine if user is manager
+    if request.user in User.objects.filter(groups__name="Manager")\
+        or request.user.is_superuser:
+        is_manager = True
+        page_form = MgrViewTimestampListForm
+    else:
+        page_form = EmpViewTimestampListForm
 
+    if request.method == 'POST':
+        # Determine correct form to use.
+        if is_manager:
+            form = page_form(request.POST)
+        else:
+            form = page_form(request.POST)
+        if request.POST.get('cancel') == '':
+            return redirect('home')
+        elif form.is_valid():
+            if is_manager:
+                employee = form.cleaned_data['employee']
+            else:
+                employee = request.user
+            start_date = form.cleaned_data['start_date']
+            end_date = form.cleaned_data['end_date']
+            date_range = (start_date, end_date)
+            stamps = get_stamplist(employee, date_range)
+            return render(
+                request,
+                'view_stamplist.html',
+                {'form': form,
+                 'stamps': stamps,
+                 }
+            )
 
+    form = page_form()
+    return render(
+        request,
+        'view_stamplist.html',
+        {'form': form}
+    )
 
 
 
