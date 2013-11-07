@@ -115,13 +115,27 @@ def get_payperiod(date):
         period_end = datetime.datetime(end_year, month_plusone, 1, tzinfo=TZ)
     return period_start, period_end
 
-def get_range(employee, date_start, date_end):
-    stamps = Timestamp.objects.filter(
-        user=employee,
-        stamp__range=(date_start, date_end)
-    )
-    stamps = stamps.order_by('stamp')
-    return stamps
+
+######### MADE REDUNDANT BY get_stamplist(range)
+# def get_range(employee, date_start, date_end):
+#     stamps = Timestamp.objects.filter(
+#         user=employee,
+#         stamp__range=(date_start, date_end)
+#     )
+#     stamps = stamps.order_by('stamp')
+#     return stamps
+
+def get_stamplist(employee, range):
+    if employee not in User.objects.filter(groups__name='Employee'):
+        msg = "An User instance belonging to Group 'Employee' is required."
+        raise TimecardError(msg)
+    if type(range) != 'tuple' and len(range) != 2:
+        raise TimecardError('Incorrect range input.')
+    # generate list within the provided range.
+    start, end = range[0], range[1] + timedelta(1)
+    stamp_list = Timestamp.objects.filter(user=employee,
+                                          stamp__range=(start, end))
+    return stamp_list
 
 
 class Timecard():
@@ -177,7 +191,7 @@ class Timecard():
         calculates the beginning of the workweek used for calculating
         overtime, which is based on a Sunday to Saturday system.
         """
-        if self.start_weekday == 6: 
+        if self.start_weekday == 6:
         # Period start day is a Sunday
             return self.start_date
         else:
@@ -194,7 +208,7 @@ class Timecard():
         Collects all timestamps for the Timecard instance's employee for the
         instance's time period.
         """
-        all_stamps = Timestamp.objects.all().filter(
+        all_stamps = Timestamp.objects.filter(
             user=self.emp,
             stamp__range=(self.start_date, self.end_date)
             ).order_by('stamp')
@@ -376,5 +390,18 @@ class TimecardError(Exception):
 
     def __str__(self):
         base_str = "There was an error generating you timecard:"
-        full_str = "{0}\n{1}".format(base_str, msg)
+        full_str = "{0}\n{1}".format(base_str, self.msg)
+        return full_str
+
+class TimestampEntryError(Exception):
+    """
+    Custom exception for generating Timestamp instance.
+    """
+    def __init__(self, msg):
+        self.msg = msg
+
+    def __str__(self):
+        base_str =  "There was an error generating the timestamp:"
+        full_str = "{}\n{}".format(base_str, self.msg)
+        return full_str
 
