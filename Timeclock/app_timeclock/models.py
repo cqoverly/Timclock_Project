@@ -95,5 +95,8 @@ class TimestampEdits(models.Model):
     change_reason = models.CharField("Reason", max_length=255)
     date_changed = models.DateTimeField("Date Changed")
 
+    class meta:
+        verbose_name_plural = "TimestampEdits"
+
 
 
