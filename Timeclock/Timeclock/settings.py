@@ -116,7 +116,6 @@ TEMPLATE_DIRS = (
     os.path.join(ROOT_DIR, "templates/manager"),
     os.path.join(ROOT_DIR, "templates/timeclock"),
 )
-print 'Templates: {}'.format(TEMPLATE_DIRS[0])
 
 INSTALLED_APPS = (
     'django.contrib.auth',
