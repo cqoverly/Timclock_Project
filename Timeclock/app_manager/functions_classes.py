@@ -12,10 +12,11 @@ def manager_only(func):
     def wrapper(*args, **kwargs):
         request = args[0]
         print request.user
-        if request.user in managers:
+        if request.user in managers or request.user.is_superuser:
             return func(*args, **kwargs)
         else:
             raise PermissionDenied
     return wrapper
+
 
 
