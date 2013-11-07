@@ -30,7 +30,6 @@ class ChangePasswordForm(forms.Form):
         Raises custom exception as AttributeError with message which can be
         used in receiving function.
         """
-        print 'ENTERING CLEAN'
         pattern = re.compile(r'\w+')
         cleaned_data = super(ChangePasswordForm, self).clean()
         new_pw = cleaned_data.get("new_password")
@@ -38,7 +37,6 @@ class ChangePasswordForm(forms.Form):
         # Find match for acceptable characters
         pw_check = pattern.match(new_pw)
         if new_pw != reentered_pw:
-            print 'NOT EQUAL'
             # Raise error if fields are not equal
             msg = "Password values did not match."
             raise ValueError(msg)
