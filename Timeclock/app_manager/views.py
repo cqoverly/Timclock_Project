@@ -1,30 +1,32 @@
-# Python Std Library Imports
+####### Python Std Library Imports
 
-# Django Frameword Imports
-from django.contrib.auth.models import User, Group, Permission
+####### Django Framework Imports
+from django.contrib.auth.models import User, Group
 from django.contrib.auth import login, authenticate
 from django.shortcuts import render, redirect
-from django.views.generic import ListView, DetailView
+from django.views.generic import ListView
 from django.contrib import messages
-from django.db import IntegrityError
-from django.forms import ValidationError
+from django.contrib.auth.decorators import login_required
+# from django.db import IntegrityError
+# from django.forms import ValidationError
 
-# Third Part Imports
+####### Third Part Imports
 
-# Timeclock App Imports
+####### Project Imports
 from .forms import AddEmployeeForm, ChangePasswordForm
 from .models import Employee
+from .functions_classes import manager_only
 
-# def vw_view_employees(request):
-#     return render(request, 'view-employees.html')
 
+
+# TODO: Make into non-generic view
 class EmployeeList(ListView):
     model = User
     template_name = 'view_employees.html'
     employees = User.objects.filter(groups__name='Employee')
     queryset = employees.order_by('last_name', 'first_name')
 
-
+@login_required
 def vw_employee_detail(request, pk):
     employee = User.objects.get(pk=pk)
     info = Employee.objects.get(user=employee)
@@ -75,8 +77,8 @@ def vw_employee_detail(request, pk):
 #     form = AddEmployeeForm(initial=employee.__dict__)
 #     return render(request, 'add_employee.html', {'form': form})
 
+@manager_only
 def vw_add_employee(request):
-    entered_by = '' #TODO Is this a relic?
     user = request.user
     print user
     if request.method == 'POST':
@@ -143,6 +145,7 @@ def vw_add_employee(request):
     form = AddEmployeeForm()
     return render(request, 'add_employee.html', {'form': form})
 
+@login_required
 def vw_change_password(request):
     """
     General method for any User to change their own password. Requires that
@@ -212,8 +215,14 @@ def vw_login(request):
     return render(request, 'login.html', {'username': username})
 
 def vw_home(request):
-    # return render(request, 'home.html')
-
+    """
+    Entry page for site. If user is not logged in, a main banner with link
+    to login page is show. If the user is logged in, then that user is directed
+    to either the manager home page, or the employee home page, depending on
+    his/her groups status. As can belong to both the Manager and Employee
+    groups simultaneously, a check for the Manager group or superuser status is
+    made, and if it fails, then a check for employee is made.
+    """
     # Test if Group obbjects have been created in the auth database.
     # Create if necessary.
     mgr = Group.objects.get_or_create(name='Manager')[0]
@@ -227,16 +236,11 @@ def vw_home(request):
             return render(request,'employee_home.html')
     return render(request, 'home.html', {'home': True})
 
+@manager_only
 def vw_manager_home(request):
     return render(request, 'manager_home.html')
 
 def vw_employee_home(request):
     return render(request, 'employee_home.html')
-
-def vw_employees(request):
-    return render(request, 'view_employees.html')
-
-def vw_employee(request):
-    return render(request, 'view_employee.html')
 
 
