@@ -65,7 +65,7 @@ class MgrViewTimestampListForm(forms.Form):
     emps = User.objects.filter(groups__name="Employee")
     # custom widget needs to be reinitialized.
     class_selectwidget = forms.Select(attrs={'class': 'form-control'})
-    employee = forms.ChoiceField(
+    employee = forms.ModelChoiceField(
         widget=class_selectwidget,
         queryset=emps,
         label="Employee")
