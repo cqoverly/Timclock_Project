@@ -2,7 +2,7 @@
 {% block title %}Timecard{% endblock %}
 {% block content %}
 <h2 class="text-primary">View Timecard for {{ user.first_name }} {{ user.last_name }}</h2>
-  <!-- DISPLAY EDIT TIMESTAMPS FORM -->
+<!-- DISPLAY EDIT TIMESTAMPS FORM -->
 <div class="row">
     <form action="" method="POST" class="col-md-3 well">{% csrf_token %}
       {% if form.emplyee %}
@@ -15,8 +15,12 @@
       <button class="btn" name="cancel">Cancel</button>
     </form>
 </div>
+<!-- END EDIT TIMESTAMPS FORM -->
 {% if stamps %}
-  <!-- DISPLAY TIMESTAMPS TABLE -->
+  <!-- DISPLAY LIST OF TIME STAMPS -->
+<h2 class="text-primary">
+  Time Stamps for {{ start }} to {{ end }} for {{ employee }}
+</h2>
 <div>
   <div class="row">
   <h3 class="text-primary">{{ w }}</h3>
@@ -38,4 +42,5 @@
   </div>
 </div>
 {% endif %}
+<!-- END LIST OF TIME STAMPS -->
 {% endblock %}
