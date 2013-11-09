@@ -79,6 +79,8 @@ def vw_view_timecard(request):
                 # cancel timecard lookup
                 return redirect('home')
             elif form.is_valid():
+
+                # TODO: Can Timecard display params be passed from a Timecard method?
                 # timecard lookup requested/
                 if user_isemployee:
                     # user viewing EmpViewTimecardForm, has no employee field
@@ -157,32 +159,35 @@ def vw_edit_timestamp(request, pk):
         elif form.is_valid():
             new_datetime = form.cleaned_data['new_datetime']
             new_inout = form.cleaned_data['new_inout']
-            editable_params = {
-                'timestamp': orig_stamp,
-                'changed_by': user,
-                'for_employee': orig_stamp.user,
-                'original_datetime': orig_stamp.stamp,
-                'original_inout': orig_stamp.in_out,
-                'new_datetime': new_datetime,
-                'new_inout': new_inout,
-                'change_reason': form.cleaned_data['change_reason'],
-                'date_changed': datetime.datetime.now(),
-            }
-            #### Is this necessary?
-            # update_params = {
-            #     'stamp': new_datetime,
-            #     'in_out': new_inout,
-            # }
-            ####
-            # Update stamp fields
-            orig_stamp.stamp = new_datetime
-            orig_stamp.in_out = new_inout
-            edit_entry = TimestampEdits(**editable_params)
+            reason = form.cleaned_data['change_reason']
 
-            # Update stamp
-            orig_stamp.save()
-            # create new record in EditStamp table
-            edit_entry.save()
+            ######### TO REPLACE ############
+            # editable_params = {
+            #     'timestamp': orig_stamp,
+            #     'changed_by': user,
+            #     'for_employee': orig_stamp.user,
+            #     'original_datetime': orig_stamp.stamp,
+            #     'original_inout': orig_stamp.in_out,
+            #     'new_datetime': new_datetime,
+            #     'new_inout': new_inout,
+            #     'change_reason': form.cleaned_data['change_reason'],
+            #     'date_changed': datetime.datetime.now(),
+            # }
+            # orig_stamp.stamp = new_datetime
+            # orig_stamp.in_out = new_inout
+            # edit_entry = TimestampEdits(**editable_params)
+            #
+            # # Update stamp
+            # orig_stamp.save()
+            # # create new record in EditStamp table
+            # edit_entry.save()
+            ########## END REPLACE #################
+
+            orig_stamp.edit_timestamp(
+                request.user,
+                new_datetime,
+                new_inout,
+                reason)
             msg = "Your timestamp has been changed."
             messages.add_message(request, messages.SUCCESS, msg)
             return redirect('home')
@@ -204,8 +209,21 @@ def vw_edit_timestamp(request, pk):
 # TODO: Add docstring and line commnets
 @login_required
 def vw_list_timestamps(request):
+    """
+    The vw_list_timestamps view generates a form to select a date range from
+    which to generate of list of timestamps for a particular User. If the
+    request.user is belongs to the Manager group, then the form will have a
+    select widget containg a list of all Users belonging to the Employee group.
+    If the User is not a memeber of the Manager group, then just the text fields
+    for a date are displayed, and the request.user become the employee for the
+    query search when the form is submitted.
+
+    Upon a successful submit, the list of timesetamps is generated and a page
+    is rendered with the list and date parameters passed to the page to be used
+    if desired, along with a form instance.
+    """
     is_manager = False
-    page_form = None
+    # page_form = None
     # Determine if user is manager
     if request.user in User.objects.filter(groups__name="Manager")\
         or request.user.is_superuser:
@@ -224,18 +242,25 @@ def vw_list_timestamps(request):
             return redirect('home')
         elif form.is_valid():
             if is_manager:
+                # if it is the manager form, employee name needs to be pulled.
                 employee = form.cleaned_data['employee']
             else:
+                # if it's the employee form, employee is the request.user
                 employee = request.user
             start_date = form.cleaned_data['start_date']
             end_date = form.cleaned_data['end_date']
+            # create tuple from dates to send to get_stamplist(employee, range)
             date_range = (start_date, end_date)
+            # generate list of stamps.
             stamps = get_stamplist(employee, date_range)
             return render(
                 request,
                 'view_stamplist.html',
                 {'form': form,
                  'stamps': stamps,
+                 'start': start_date,
+                 'end': end_date + timedelta(1),
+                 'employee': employee
                  }
             )
 
