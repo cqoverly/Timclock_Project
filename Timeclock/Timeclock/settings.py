@@ -173,5 +173,7 @@ LOGGING = {
     }
 }
 
+SOUTH_TESTS_MIGRATE = False
+
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = '/'
