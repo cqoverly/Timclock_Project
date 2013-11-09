@@ -1,15 +1,17 @@
-from django.db import models
-from django.contrib.auth.models import User
-# import django.utils
-# import datetime
+# Python std library imports
+import datetime
 # from datetime import timedelta
 # import calendar
-# import pytz
 
+# Django framework imports
+from django.db import models
+from django.contrib.auth.models import User
+from django.utils import timezone
+# import django.utils
 # from django.core.exceptions import DoesNotExist
 
-# Create your models here.
-
+# Third party imports
+# import pytz
 # from DjangoTest.settings import TIME_ZONE
 
 
@@ -59,7 +61,7 @@ class Timestamp(models.Model):
         try:
             last_stamp = Timestamp.objects.all().filter(user=user).latest('stamp')
         except Timestamp.DoesNotExist:
-            # Most likely because new employee cloking in for first time.
+            # Most likely because new employee clocking in for first time.
             return 'IN'
         if last_stamp.in_out == 'IN':
             return 'OUT'
@@ -69,11 +71,27 @@ class Timestamp(models.Model):
         else:
             raise AttributeError
 
-    def edit_timestamp(self):
-        """
-        Updates a change in a Timestamp instance.
-        """
-        pass
+    def edit_timestamp(self, request_user, new_dt, new_inout, reason):
+        edittable_params = {
+            'timestamp': self,
+            'changed_by': request_user,
+            'for_employee': self.user,
+            'original_datetime': self.stamp,
+            'original_inout': self.in_out,
+            'new_datetime': new_dt,
+            'new_inout': new_inout,
+            'change_reason': reason,
+            'date_changed': timezone.now(),
+        }
+        self.stamp = new_dt
+        self.in_out = new_inout
+        edit_entry = TimestampEdits(**edittable_params)
+
+        # Update stamp
+        self.save()
+        # create new record in EditStamp table
+        edit_entry.save()
+        return True
 
 
 class TimestampEdits(models.Model):
