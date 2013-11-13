@@ -142,7 +142,3 @@ class TimestampEditsTestCase(TestCase):
         self.assertEqual(new.new_inout, old.in_out)
         self.assertEqual(new.change_reason, self.reason)
         self.assertIsInstance(new.date_changed, datetime.datetime)
-
-
-
-
