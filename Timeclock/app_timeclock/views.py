@@ -30,6 +30,7 @@ from .functions_classes import Timecard
 
 TZ = pytz.timezone(settings.TIME_ZONE)
 
+
 @login_required
 def vw_punch_clock(request):
     employee = request.user
@@ -54,7 +55,10 @@ def vw_punch_clock(request):
                 messages.add_message(request, messages.SUCCESS, msg)
                 return redirect('home')
             except TimestampEntryError, e:
-                msg = "{}\nIf your In/Out is correct. Please review your card and correct."
+                msg = """
+                {}\nIf your In/Out is correct.
+                Please review your card and correct.""".format(e)
+
                 params = {'stamp': stamp_dt, 'in_out': in_out}
                 form = TimestampForm(initial=params)
                 messages.add_message(request, messages.ERROR, msg)
@@ -66,10 +70,23 @@ def vw_punch_clock(request):
         'in_out':in_out
     }
     form = TimestampForm(initial=params)
-    return render(request, 'punch_clock.html', {'form':form})
+    return render(request, 'punch_clock.html', {'form': form})
+
 
 @login_required
 def vw_view_timecard(request):
+    """
+    Displays form for selecting a pay period to display, then displays a
+    Timecard instance for that pay period.
+
+    Form provided depends on whether the request.user is a manager or employee,
+    the former presented with the ability to choose any employee to view. An
+    employee is only allowed to view their own timecard.
+
+    The information is retrieved through creation of a Timecard instance and
+    its methods.
+
+    """
     # Assumed user is an Employee
     TimecardForm = EmpViewTimecardForm
     user_isemployee = True
@@ -98,9 +115,9 @@ def vw_view_timecard(request):
                 date = form.cleaned_data['date']    #date within timecard period
                                                     # desired.
                 # reformat date to pass into Timecard.__init__
-                templ = '%m/%d/%y' # used to reformat date for Timecard.__init__
+                templ = '%m/%d/%y' # used to format date for Timecard.__init__
                 str_date = date.strftime(templ)
-
+                # generate a Timecard instance.
                 timecard = Timecard(employee, str_date)
                 card = timecard._card.items()   # create list of dicts to sort
                 card.sort()                     # by week
@@ -137,6 +154,7 @@ def vw_view_timecard(request):
     # employee = request.user
     form = TimecardForm()
     return render(request, 'view_timecard.html', {'form': form})
+
 
 @login_required
 def vw_edit_timestamp(request, pk):
