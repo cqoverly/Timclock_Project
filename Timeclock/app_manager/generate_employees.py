@@ -7,16 +7,16 @@ MANAGER = Group.objects.get_or_create(name='Manager')[0]
 EMPLOYEE = Group.objects.get_or_create(name='Employee')[0]
 # Check if permissions have been created.
 
-if not EMPLOYEE.permissions.all():
-    ADD_STAMP = Permission.objects.get(name='Can add Can add timestamp')
-    CHANGE_STAMP = Permission.objects.get(name='Can add Can change timestamp')
-    EMPLOYEE.permissions.add(ADD_STAMP)
-    EMPLOYEE.permissions.add(CHANGE_STAMP)
-    EMPLOYEE.save()
-if not MANAGER.permissions.all():
-    ADD_USER = Permission.objects.get(name='Can change user')
-    MANAGER.permissions.add(ADD_USER)
-    MANAGER.save()
+# if not EMPLOYEE.permissions.all():
+#     ADD_STAMP = Permission.objects.get(name='Can add timestamp')
+#     CHANGE_STAMP = Permission.objects.get(name='Can change timestamp')
+#     EMPLOYEE.permissions.add(ADD_STAMP)
+#     EMPLOYEE.permissions.add(CHANGE_STAMP)
+#     EMPLOYEE.save()
+# if not MANAGER.permissions.all():
+#     ADD_USER = Permission.objects.get(name='Can change user')
+#     MANAGER.permissions.add(ADD_USER)
+#     MANAGER.save()
 
 STREET_ADDS = [
     'Farthing Ave.',
@@ -36,6 +36,16 @@ L_NAMES = ['Winston', 'Clinton', 'Bush', 'Ford', 'Carter', 'Nixon', 'Washinton',
 
 
 def gen_users():
+    if not EMPLOYEE.permissions.all():
+        ADD_STAMP = Permission.objects.get(name='Can add timestamp')
+        CHANGE_STAMP = Permission.objects.get(name='Can change timestamp')
+        EMPLOYEE.permissions.add(ADD_STAMP)
+        EMPLOYEE.permissions.add(CHANGE_STAMP)
+        EMPLOYEE.save()
+    if not MANAGER.permissions.all():
+        ADD_USER = Permission.objects.get(name='Can change user')
+        MANAGER.permissions.add(ADD_USER)
+        MANAGER.save()
     for i in range(len(F_NAMES)):
         first_name, last_name = random.choice(F_NAMES), random.choice(L_NAMES)
         F_NAMES.remove(first_name)
