@@ -92,7 +92,7 @@ def vw_view_timecard(request):
     user_isemployee = True
     user = request.user
     #if user is in Manager User Group, switch form type
-    if user not in User.objects.filter(groups__name='Employee'):
+    if user in User.objects.filter(groups__name='Manager') or user.is_superuser:
         TimecardForm = ManagerViewTimecardForm
         user_isemployee = False
     try:
