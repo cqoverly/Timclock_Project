@@ -38,20 +38,27 @@ def vw_punch_clock(request):
         if request.POST.get('cancel') == '':
                 return redirect('home')
         elif form.is_valid():
-            # employee = Employee.objects.get(username=request.user.username)
-            stamp_dt = form.cleaned_data['stamp']
-            in_out = form.cleaned_data['in_out']
-            #convert aware datetime
-            stamp = stamp_dt
-            params = {'user': employee,
-                'stamp': stamp,
-                'in_out': in_out
-                }
-            timestamp = Timestamp(**params)
-            timestamp.save()
-            msg = 'You have been clocked {} @ {}'.format(in_out, stamp)
-            messages.add_message(request, messages.SUCCESS, msg)
-            return redirect('home')
+            try:
+                # employee = Employee.objects.get(username=request.user.username)
+                stamp_dt = form.cleaned_data['stamp']
+                in_out = form.cleaned_data['in_out']
+                #convert aware datetime
+                stamp = stamp_dt
+                params = {'user': employee,
+                    'stamp': stamp,
+                    'in_out': in_out
+                    }
+                timestamp = Timestamp(**params)
+                timestamp.save()
+                msg = 'You have been clocked {} @ {}'.format(in_out, stamp)
+                messages.add_message(request, messages.SUCCESS, msg)
+                return redirect('home')
+            except TimestampEntryError, e:
+                msg = "{}\nIf your In/Out is correct. Please review your card and correct."
+                params = {'stamp': stamp_dt, 'in_out': in_out}
+                form = TimestampForm(initial=params)
+                messages.add_message(request, messages.ERROR, msg)
+                return render(request, 'punch_clock.html', {'form': form})
 
     in_out = Timestamp.set_inout(employee)
     params = {
