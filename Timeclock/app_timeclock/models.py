@@ -1,28 +1,19 @@
 # Python std library imports
 import datetime
-# from datetime import timedelta
-# import calendar
 
 # Django framework imports
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
-# import django.utils
-# from django.core.exceptions import DoesNotExist
+from django.conf import settings
 
-# Third party imports
-# import pytz
-# from DjangoTest.settings import TIME_ZONE
+# 3rd party imports
+import pytz
 
+# Project imports
+# from .functions_classes import TimestampEntryError
 
-#MOVED TO .methods_classes.py
-
-# TZ = pytz.timezone(TIME_ZONE)
-# UTC = pytz.timezone('utc')
-# WEEKDAYS = ['Sun', 'Mon', 'Tues', 'Wed', 'Thur', 'Fri', 'Sat']
-# WEEKDAY_NUMBERS = [6, 0, 1, 2, 3, 4, 5, 6]
-# WEEKDAY_DICT = dict(zip(WEEKDAYS, WEEKDAY_NUMBERS))
-
+T_ZONE = pytz.timezone(settings.TIME_ZONE)
 
 class Timestamp(models.Model):
     TIME_IN = 'IN'
@@ -93,8 +84,55 @@ class Timestamp(models.Model):
         edit_entry.save()
         return True
 
+    def save(self, *args, **kwargs):
+        # verify the new in_out is in the right order and raise exception
+        # if not.
+        try:
+            # get the previous stamp
+            last = Timestamp.objects.filter(
+                user=self.user,
+                stamp__lt=self.stamp)
+            last = last.latest('stamp')
+            l_stamp = last.stamp
+            if last.in_out == self.in_out:
+                raise TimestampEntryError('IN/OUT not in correct order.')
+
+            # Check of timestamp straddles more than one date
+            if last.in_out == 'IN' and last.stamp.date() != self.stamp.date():
+                # create an out stamp for previous day, and an instamp at
+                # start of current day
+                l_year, l_month, l_day = l_stamp.year, l_stamp.month, l_stamp.day
+                out_stamp = datetime.datetime(
+                    l_year, l_month, l_day, 23, 59, 59, tzinfo=T_ZONE
+                )
+                # create out stamp on previous day
+                Timestamp.objects.create(
+                    user=self.user,
+                    stamp=out_stamp,
+                    in_out='OUT'
+                )
+                s_stamp = self.stamp
+                s_year, s_month, s_day = s_stamp.year, s_stamp.month, s_stamp.day
+                in_stamp = datetime.datetime(
+                    s_year, s_month, s_day, 0, 0, 1, tzinfo=T_ZONE
+                )
+                # create in stamp on current day
+                Timestamp.objects.create(
+                    user=self.user,
+                    stamp=in_stamp,
+                    in_out='IN'
+                )
+        except Timestamp.DoesNotExist:
+            pass
+
+        # save the requested timestamp.
+        super(Timestamp, self).save(*args, **kwargs)
+
 
 class TimestampEdits(models.Model):
+    """
+    Logs changes made to Timestamp instances made.
+    """
     timestamp = models.ForeignKey(Timestamp, verbose_name="Changed StampID")
     changed_by = models.ForeignKey(
         User,
@@ -117,4 +155,26 @@ class TimestampEdits(models.Model):
         verbose_name_plural = "TimestampEdits"
 
 
+class TimecardError(Exception):
+    """
+    Custom exception for errors generating a Timecard instance.
+    """
+    def __init__(self, msg):
+        self.msg = msg
 
+    def __str__(self):
+        base_str = "There was an error generating you timecard:"
+        full_str = "{0}\n{1}".format(base_str, self.msg)
+        return full_str
+
+class TimestampEntryError(Exception):
+    """
+    Custom exception for generating Timestamp instance.
+    """
+    def __init__(self, msg):
+        self.msg = msg
+
+    def __str__(self):
+        base_str =  "There was an error generating the timestamp:"
+        full_str = "{}\n{}".format(base_str, self.msg)
+        return full_str
