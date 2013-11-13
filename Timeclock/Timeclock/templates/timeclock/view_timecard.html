@@ -16,6 +16,13 @@
 </div>
   <!-- DISPLAY TIMESTAMPS TABLE -->
 <div>
+  {% if card %}
+  <div class="row">
+    <p>Regular Hours: {{ regular_hrs }}</p>
+    <p>OT Hours: {{ OT_hrs }}</p>
+    <p>Total Hours: {{ total_hrs }}</p>
+  </div>
+  {% endif %}
   {% for w, witems in card %}
   <div class="row">
   <h3 class="text-primary">{{ w }}</h3>
