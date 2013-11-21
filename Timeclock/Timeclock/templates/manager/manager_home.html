@@ -21,20 +21,26 @@
     </li>
     <li>
       <h4>
+          <span class="glyphicon glyphicon-time"></span>
+          <a href="{% url 'punch_clock' %}">Clock In/Out</a></li>
+      </h4>
+    <li>
+    <li>
+      <h4>
           <span class="glyphicon glyphicon-list"></span>
           <a href="{% url 'view_card' %}">View Employee Timecards</a>
       </h4>
     </li>
     <li>
       <h4>
-          <span class="glyphicon glyphicon-link"></span>
-          <a href="{% url 'change_password' %}">Change Password</a>
-      </h4>
-  </li>
-    <li>
-      <h4>
           <span class="glyphicon glyphicon-list"></span>
           <a href="{% url 'list_stamps' %}">View Timestamps</a>
+      </h4>
+    </li>
+    <li>
+      <h4>
+          <span class="glyphicon glyphicon-link"></span>
+          <a href="{% url 'change_password' %}">Change Password</a>
       </h4>
     </li>
   </ul>
