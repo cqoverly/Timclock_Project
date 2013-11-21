@@ -87,15 +87,20 @@ class Timestamp(models.Model):
     def save(self, *args, **kwargs):
         # verify the new in_out is in the right order and raise exception
         # if not.
+        print "IN SAVE"
         try:
             # get the previous stamp
+            # TODO: clean out in_out checking
             last = Timestamp.objects.filter(
                 user=self.user,
-                stamp__lt=self.stamp)
+                stamp__lt=Timestamp.objects.get(pk=self.pk).stamp)
             last = last.latest('stamp')
+
             l_stamp = last.stamp
-            if last.in_out == self.in_out:
-                raise TimestampEntryError('IN/OUT not in correct order.')
+            print "{} -- {}".format(last.in_out, l_stamp)
+            # if last.in_out == self.in_out:
+            #     print 'RAISING ERROR'
+            #     raise TimestampEntryError('IN/OUT not in correct order.')
 
             # Check of timestamp straddles more than one date
             if last.in_out == 'IN' and last.stamp.date() != self.stamp.date():
