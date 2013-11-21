@@ -14,8 +14,11 @@ from django.contrib.auth.decorators import login_required
 
 # project modules
 from django.conf import settings
-from .functions_classes import TimecardError, get_stamplist
-
+from .functions_classes import (
+    TimecardError,
+    TimestampEntryError,
+    get_stamplist
+)
 from .forms import (
     TimestampForm,
     EmpViewTimecardForm,
@@ -56,9 +59,8 @@ def vw_punch_clock(request):
                 return redirect('home')
             except TimestampEntryError, e:
                 msg = """
-                {}\nIf your In/Out is correct.
-                Please review your card and correct.""".format(e)
-
+                {}\n Please review your card and correct.
+                """.format(e)
                 params = {'stamp': stamp_dt, 'in_out': in_out}
                 form = TimestampForm(initial=params)
                 messages.add_message(request, messages.ERROR, msg)
@@ -176,46 +178,32 @@ def vw_edit_timestamp(request, pk):
     """
     user = request.user
     orig_stamp = Timestamp.objects.get(pk=pk)
-    if request.method == 'POST':
-        form = EditStampForm(request.POST)
-        print request.POST
-        if request.POST.get('cancel') == '':
-            return redirect('home')
-        elif form.is_valid():
-            new_datetime = form.cleaned_data['new_datetime']
-            new_inout = form.cleaned_data['new_inout']
-            reason = form.cleaned_data['change_reason']
-
-            ######### TO REPLACE ############
-            # editable_params = {
-            #     'timestamp': orig_stamp,
-            #     'changed_by': user,
-            #     'for_employee': orig_stamp.user,
-            #     'original_datetime': orig_stamp.stamp,
-            #     'original_inout': orig_stamp.in_out,
-            #     'new_datetime': new_datetime,
-            #     'new_inout': new_inout,
-            #     'change_reason': form.cleaned_data['change_reason'],
-            #     'date_changed': datetime.datetime.now(),
-            # }
-            # orig_stamp.stamp = new_datetime
-            # orig_stamp.in_out = new_inout
-            # edit_entry = TimestampEdits(**editable_params)
-            #
-            # # Update stamp
-            # orig_stamp.save()
-            # # create new record in EditStamp table
-            # edit_entry.save()
-            ########## END REPLACE #################
-
-            orig_stamp.edit_timestamp(
-                request.user,
-                new_datetime,
-                new_inout,
-                reason)
-            msg = "Your timestamp has been changed."
-            messages.add_message(request, messages.SUCCESS, msg)
-            return redirect('home')
+    try:
+        if request.method == 'POST':
+            form = EditStampForm(request.POST, orig_stamp=orig_stamp)
+            print request.POST
+            if request.POST.get('cancel') == '':
+                return redirect('home')
+            elif form.is_valid():
+                new_datetime = form.cleaned_data['new_datetime']
+                new_inout = form.cleaned_data['new_inout']
+                reason = form.cleaned_data['change_reason']
+                print "HERE 1"
+                orig_stamp.edit_timestamp(
+                    request.user,
+                    new_datetime,
+                    new_inout,
+                    reason)
+                print "HERE 2"
+                msg = "Your timestamp has been changed."
+                messages.add_message(request, messages.SUCCESS, msg)
+                return redirect('home')
+    except TimestampEntryError, e:
+            print "HERE# 3"
+            msg = """
+            {}\n Please review and correct your previous time stamps.
+            """.format(e)
+            messages.add_message(request, messages.ERROR, msg)
     # generate initial form with date from stamp to be changed for convenience.
     initial_params = {
         'new_datetime': orig_stamp.stamp,
@@ -248,11 +236,13 @@ def vw_list_timestamps(request):
     if desired, along with a form instance.
     """
     is_manager = False
+    form = None
     # page_form = None
     # Determine if user is manager
     if request.user in User.objects.filter(groups__name="Manager")\
         or request.user.is_superuser:
         is_manager = True
+        print 'IS MANAGER'
         page_form = MgrViewTimestampListForm
     else:
         page_form = EmpViewTimestampListForm
