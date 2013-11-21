@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% block title %}Timecard{% endblock %}
 {% block content %}
-<h2 class="text-primary">View Timecard for {{ user.first_name }} {{ user.last_name }}</h2>
+<h2 class="text-primary">View Time Stamps for {{ user.first_name }} {{ user.last_name }}</h2>
 <!-- DISPLAY EDIT TIMESTAMPS FORM -->
 <div class="row">
     <form action="" method="POST" class="col-md-3 well">{% csrf_token %}
-      {% if form.emplyee %}
+      {% if form.employee %}
       <p>{{ form.employee }}</p>
       {% endif %}
       <label>Enter date range:</label>
