@@ -51,21 +51,63 @@ class ChangePasswordForm(forms.Form):
         return cleaned_data
 
 
-class AddEmployeeForm(forms.Form):
+class EmployeeInfoForm(forms.Form):
     """
     Used to generate both a new django User, as well as an an Employee instance
     """
-    last_name = forms.CharField(max_length=50)
-    first_name = forms.CharField(max_length=30)
-    username = forms.CharField(max_length=20)
-    initials = forms.CharField(max_length=4)
-    street1 = forms.CharField(max_length=60, required=False)
-    street2 = forms.CharField(max_length=60,required=False)
-    city = forms.CharField(max_length=30, required=False)
-    state = forms.CharField(max_length=2, required=False)
-    zip_code = forms.CharField(max_length=10, required=False)
-    date_started = forms.DateTimeField(required=False)
-    starting_wage = forms.DecimalField(decimal_places=2, required=False)
+    class_textwidget = forms.TextInput
+
+    last_name = forms.CharField(
+        max_length=50,
+        widget=class_textwidget(attrs={'class': 'form-control'})
+    )
+    first_name = forms.CharField(
+        max_length=30,
+        widget=class_textwidget(attrs={'class': 'form-control'})
+    )
+    username = forms.CharField(
+        max_length=20,
+        widget=class_textwidget(attrs={'class': 'form-control'})
+    )
+    street1 = forms.CharField(
+        max_length=60,
+        required=False,
+        widget=class_textwidget(attrs={'class': 'form-control'})
+    )
+    street2 = forms.CharField(
+        max_length=60,
+        required=False,
+        widget=class_textwidget(attrs={'class': 'form-control'})
+    )
+    city = forms.CharField(
+        max_length=30,
+        required=False,
+        widget=class_textwidget(attrs={'class': 'form-control'})
+    )
+    state = forms.CharField(
+        max_length=2,
+        required=False,
+        widget=class_textwidget(attrs={'class': 'form-control'})
+    )
+    zip_code = forms.CharField(
+        max_length=10,
+        required=False,
+        widget=class_textwidget(attrs={'class': 'form-control'})
+    )
+    date_started = forms.DateTimeField(
+        required=False,
+        widget=class_textwidget(attrs={'class': 'form-control'})
+    )
+    starting_wage = forms.DecimalField(
+        decimal_places=2,
+        required=False,
+        widget=class_textwidget(attrs={'class': 'form-control'})
+    )
+    current_wage = forms.DecimalField(
+        decimal_places=2,
+        required=False,
+        widget=class_textwidget(attrs={'class': 'form-control'})
+    )
 
     class meta:
         initial = {'date_started': timezone.now()}
