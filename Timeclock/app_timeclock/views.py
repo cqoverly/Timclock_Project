@@ -36,13 +36,23 @@ TZ = pytz.timezone(settings.TIME_ZONE)
 
 @login_required
 def vw_punch_clock(request):
+    """
+    The vw_punch_clock view is the primary means for an employee (which is
+    simply a User instance belonging to the 'Employee' group) to clock
+    in or out.
+
+    When the request.method is 'GET', then vw_punch_clock renders the
+    TimestampForm with the current datetime in the stamp field and the
+    IN/OUT state that will follow in the correct order depending on the
+    chronologically previous timestamp for the current request.user.
+    """
     employee = request.user
     if request.method == 'POST':
-        form = TimestampForm(request.POST)
-        if request.POST.get('cancel') == '':
-                return redirect('home')
-        elif form.is_valid():
-            try:
+        form = TimestampForm(request.POST, employee=employee)
+        try:
+            if request.POST.get('cancel') == '':
+                    return redirect('home')
+            elif form.is_valid():
                 # employee = Employee.objects.get(username=request.user.username)
                 stamp_dt = form.cleaned_data['stamp']
                 in_out = form.cleaned_data['in_out']
@@ -57,14 +67,14 @@ def vw_punch_clock(request):
                 msg = 'You have been clocked {} @ {}'.format(in_out, stamp)
                 messages.add_message(request, messages.SUCCESS, msg)
                 return redirect('home')
-            except TimestampEntryError, e:
-                msg = """
-                {}\n Please review your card and correct.
-                """.format(e)
-                params = {'stamp': stamp_dt, 'in_out': in_out}
-                form = TimestampForm(initial=params)
-                messages.add_message(request, messages.ERROR, msg)
-                return render(request, 'punch_clock.html', {'form': form})
+        except TimestampEntryError, e:
+            msg = """
+            {}\n Please review your card and correct.
+            """.format(e)
+            messages.add_message(request, messages.ERROR, msg)
+            # params = {'stamp': stamp_dt, 'in_out': in_out}
+            # form = TimestampForm(initial=params)
+            # return render(request, 'punch_clock.html', {'form': form})
 
     in_out = Timestamp.set_inout(employee)
     params = {
@@ -73,6 +83,67 @@ def vw_punch_clock(request):
     }
     form = TimestampForm(initial=params)
     return render(request, 'punch_clock.html', {'form': form})
+
+
+@login_required
+def vw_edit_timestamp(request, pk):
+    """
+    View processes a request to change an existing Timestamp instance.
+    Two primary actions occur upon successful POST:
+        1) The instance is updated with the new data.
+            This update involves checking to make sure the date fits within
+            the current Timestamp order for the particular employee. It is
+            essential that stamps are not allowed to occur out of order as this
+            will create an inability to create a correct Timecard.
+        2) A new record is created in the app_timeclock_timestampedits table.
+            The primary purpose of this record is for management to monitor
+            changes, as the employees themselves are allowed to make the
+            updates. This is neccessary to keep managers from constantly having
+            to fix the stamps on their own. Clock punching is rife with missed
+            stamps or delayed stamps as workers do not always have access to
+            the timeclock or forget to punch the clock.
+    """
+    user = request.user
+    orig_stamp = Timestamp.objects.get(pk=pk)
+    try:
+        if request.method == 'POST':
+            form = EditStampForm(request.POST, orig_stamp=orig_stamp)
+            print request.POST
+            if request.POST.get('cancel') == '':
+                return redirect('home')
+            elif form.is_valid():
+                new_datetime = form.cleaned_data['new_datetime']
+                new_inout = form.cleaned_data['new_inout']
+                reason = form.cleaned_data['change_reason']
+                print "HERE 1"
+                orig_stamp.edit_timestamp(
+                    request.user,
+                    new_datetime,
+                    new_inout,
+                    reason)
+                print "HERE 2"
+                msg = "Your timestamp has been changed."
+                messages.add_message(request, messages.SUCCESS, msg)
+                return redirect('home')
+    except TimestampEntryError, e:
+            print "HERE# 3"
+            msg = """
+            {}\n Please review and correct your previous time stamps.
+            """.format(e)
+            messages.add_message(request, messages.ERROR, msg)
+    # generate initial form with date from stamp to be changed for convenience.
+    initial_params = {
+        'new_datetime': orig_stamp.stamp,
+        'new_inout': orig_stamp.in_out,
+    }
+    form = EditStampForm(initial=initial_params)
+    return render(
+        request,
+        'edit_stamp.html',
+        {'form': form,
+        'stamp': orig_stamp, # sent along to use attributes in page.
+        }
+    )
 
 
 @login_required
@@ -158,65 +229,11 @@ def vw_view_timecard(request):
     return render(request, 'view_timecard.html', {'form': form})
 
 
-@login_required
-def vw_edit_timestamp(request, pk):
-    """
-    View processes a request to change an existing Timestamp instance.
-    Two primary actions occur upon successful POST:
-        1) The instance is updated with the new data.
-            This update involves checking to make sure the date fits within
-            the current Timestamp order for the particular employee. It is
-            essential that stamps are not allowed to occur out of order as this
-            will create an inability to create a correct Timecard.
-        2) A new record is created in the app_timeclock_timestampedits table.
-            The primary purpose of this record is for management to monitor
-            changes, as the employees themselves are allowed to make the
-            updates. This is neccessary to keep managers from constantly having
-            to fix the stamps on their own. Clock punching is rife with missed
-            stamps or delayed stamps as workers do not always have access to
-            the timeclock or forget to punch the clock.
-    """
-    user = request.user
-    orig_stamp = Timestamp.objects.get(pk=pk)
-    try:
-        if request.method == 'POST':
-            form = EditStampForm(request.POST, orig_stamp=orig_stamp)
-            print request.POST
-            if request.POST.get('cancel') == '':
-                return redirect('home')
-            elif form.is_valid():
-                new_datetime = form.cleaned_data['new_datetime']
-                new_inout = form.cleaned_data['new_inout']
-                reason = form.cleaned_data['change_reason']
-                print "HERE 1"
-                orig_stamp.edit_timestamp(
-                    request.user,
-                    new_datetime,
-                    new_inout,
-                    reason)
-                print "HERE 2"
-                msg = "Your timestamp has been changed."
-                messages.add_message(request, messages.SUCCESS, msg)
-                return redirect('home')
-    except TimestampEntryError, e:
-            print "HERE# 3"
-            msg = """
-            {}\n Please review and correct your previous time stamps.
-            """.format(e)
-            messages.add_message(request, messages.ERROR, msg)
-    # generate initial form with date from stamp to be changed for convenience.
-    initial_params = {
-        'new_datetime': orig_stamp.stamp,
-        'new_inout': orig_stamp.in_out,
-    }
-    form = EditStampForm(initial=initial_params)
-    return render(
-        request,
-        'edit_stamp.html',
-        {'form': form,
-        'stamp': orig_stamp, # sent along to use attributes in page.
-        }
-    )
+# TODO: Create vw_timecard_printview
+def vw_timecard_printview(request):
+    pass
+
+
 
 # TODO: Test for error handling.
 # TODO: Add docstring and line commnets
