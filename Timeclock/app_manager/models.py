@@ -61,3 +61,60 @@ class Employee(models.Model):
         new_emp.date_started = params.get('date_started')
         new_emp.starting_wage = params.get('starting_wage')
         new_emp.save()
+
+    def edit_employee(self, attrs):
+        params = attrs
+        user = params.get('employee')
+        last_name = params.get('last_name')
+        first_name = params.get('first_name')
+        username = params.get('username')
+        street1 = params.get('street1')
+        street2 = params.get('street2')
+        city = params.get('city')
+        state = params.get('state')
+        zip_code = params.get('zip_code')
+        date_started = params.get('date_started')
+        starting_wage = params.get('starting_wage')
+        current_wage = params.get('current_wage')
+        # Test if any user information is changed.
+        user_test = (
+            last_name == user.last_name,
+            first_name == user.first_name,
+            username == user.username
+        )
+        if False not in user_test:
+            # Some of the info is different, so need to update.
+            user.last_name = last_name
+            user.first_name = first_name
+            user.username = username
+            user.save()
+        else:
+            # No need to save. Info is all the same.
+            pass
+        # get correct Employee instance for the user.
+        employee = Employee.objects.get(user=user)
+        # Test if user's employee info has changed
+        emp_test = (
+            employee.street1 == street1,
+            employee.street2 == street2,
+            employee.city == city,
+            employee.state == state,
+            employee.zip_code == zip_code,
+            employee.date_started == date_started,
+            employee.starting_wage == starting_wage,
+            employee.current_wage == current_wage
+        )
+        if False in emp_test:
+            # Some info is different, so need to update.
+            employee.street1 = street1
+            employee.street2 = street2
+            employee.city = city
+            employee.state = state
+            employee.zip_code = zip_code
+            employee.date_started = date_started
+            employee.starting_wage = starting_wage
+            employee.current_wage = current_wage
+            employee.save()
+        return True
+
+
