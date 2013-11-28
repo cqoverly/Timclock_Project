@@ -3,7 +3,7 @@ Timclock
 
 Django Project for site tracking worker hours.
 
-This prroject uses Django 1.4.5 and is a test case using 12th Avenue Iron's, of Seattle, pay schedule which
+This project uses Django 1.5 and is a test case using 12th Avenue Iron's, of Seattle, pay schedule which
 has pay periods as follows:
 
 1)  There are 2 pay periods per month.
