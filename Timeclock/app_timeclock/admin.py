@@ -5,7 +5,7 @@ from app_timeclock.models import Timestamp, TimestampEdits
 class TimestampAdmin(admin.ModelAdmin):
     list_display = ('stamp', 'user', 'in_out')
     list_filter = ['user']
-    ordering = ['stamp']
+    ordering = ['-stamp']
 
 
 class TimestampEditsAdmin(admin.ModelAdmin):
@@ -21,7 +21,7 @@ class TimestampEditsAdmin(admin.ModelAdmin):
     )
 
     list_filter = ['for_employee']
-    ordering = ['new_datetime']
+    ordering = ['-new_datetime']
 
 
 admin.site.register(Timestamp, TimestampAdmin)
