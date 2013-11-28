@@ -20,23 +20,36 @@ class StampMixin(forms.Form):
         try:
             self.orig_stamp = kwargs.pop('orig_stamp')
         except KeyError:
-            pass
+            self.orig_stamp = None
+        try:
+            self.employee = kwargs.pop('employee')
+        except KeyError:
+            self.employee = None
         super(StampMixin, self).__init__(*args, **kwargs)
 
     def clean(self):
+        print('IN CLEAN')
+        error = False
+        last = None
         cleaned_data = super(StampMixin, self).clean()
         # get the previous stamp
-        print self.__dict__
-        last = Timestamp.objects.filter(
-            user=self.orig_stamp.user,
-            stamp__lt=Timestamp.objects.get(pk=self.orig_stamp.pk).stamp)
-        last = last.latest('stamp')
+        if self.orig_stamp:
+            last = Timestamp.objects.filter(
+                user=self.orig_stamp.user,
+                stamp__lt=Timestamp.objects.get(pk=self.orig_stamp.pk).stamp)
+            last = last.latest('stamp')
+            if last.in_out == self.cleaned_data.get('new_inout'):
+                error = True
+        else:
+            print "clean: {0}".format(self.employee)
+            last = Timestamp.objects.filter(user=self.employee).latest('stamp')
+            if last.in_out == self.cleaned_data.get('in_out'):
+                error = True
 
-        l_stamp = last.stamp
-        print "{} -- {}".format(last.in_out, l_stamp)
-        print self.cleaned_data['new_inout']
-        if last.in_out == self.cleaned_data.get('new_inout'):
-            print 'RAISING ERROR'
+        # l_stamp = last.stamp
+        # print "{} -- {}".format(last.in_out, l_stamp)
+        # print self.cleaned_data['new_inout']
+        if error:
             raise TimestampEntryError('IN/OUT not in correct order.')
 
         return cleaned_data
@@ -53,7 +66,31 @@ class TimestampForm(StampMixin):
     in_out = forms.ChoiceField(choices=CHOICES, widget=sel_widget)
 
 
+class NoUserTimestampForm(TimestampForm):
+    """
+    The NoUserTimestampForm allows entry without authentication. An employee
+    enters their username into the 'Username' field to determine User instance
+    to clock in or out.
+
+    NoUserTimestampForm inherits from TimestampForm inherits from StampMixin
+    """
+    class_selectwidget = forms.Select(attrs={'class': 'form-control'})
+    # add username text entry field
+    employee = forms.CharField(max_length=30, widget=class_textwidget)
+
+
+
 class EditStampForm(StampMixin):
+    """
+    The EditStampForm is used to enter a date and and In/Out state to be used
+    in updating a Timestamp instance. When used in conjunction with an
+    appropriate view, such as the provided vw_edit_timestamp view, can be used
+    to change the stamp and in_out attributes of a Timestamp instance.
+
+    The clean method for the form is derived from the superclass StampMixin to
+    check for correct In/Out ordering, and can not be validated unless the
+    new values fit within the correct ordering structure of IN/OUT/IN/OUT. . .
+    """
     class_selectwidget = forms.Select(attrs={'class': 'form-control'})
     class_textareawidget = forms.Textarea(attrs={'class': 'form-control'})
     sel_widget = class_selectwidget
@@ -64,10 +101,19 @@ class EditStampForm(StampMixin):
 
 
 class EmpViewTimecardForm(forms.Form):
+    """
+    The EmpViewTimecardForm displays one field that collects a date input.
+    """
     date = forms.DateTimeField(widget=class_textwidget)
 
 
 class ManagerViewTimecardForm(forms.Form):
+    """
+    The ManagerViewTimecardForm displays one select widget and one text entry
+    field for requiring input of a date.
+
+    The form generates a selected User instance and a date.
+    """
     # get list of employees
     employees = User.objects.filter(groups__name='Employee')
     # formatting widget for Bootstrap
